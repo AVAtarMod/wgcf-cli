@@ -51,6 +51,7 @@ func TestRootCmd(t *testing.T) {
 	rootCmd.SetArgs([]string{"generate", "--wg"})
 	must(rootCmd.Execute())
 
+	os.Remove(getDefaultFilePath(WgQuick))
 	rootCmd.SetArgs([]string{"generate", "--wg-quick"})
 	must(rootCmd.Execute())
 
