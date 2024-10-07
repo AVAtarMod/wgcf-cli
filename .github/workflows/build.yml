@@ -43,7 +43,7 @@ jobs:
       - name: Get change log
         if: github.event_name == 'push' && (contains(github.ref, 'refs/tags/'))
         run: |
-            git fetch --tags --unshallow
+            git fetch --tags --unshallow --force
             if [[ "${{ steps.check.outputs.pre-release }}" == true ]]; then
               LAST_TAG=$(git describe --tags --abbrev=0 HEAD^)
             else
