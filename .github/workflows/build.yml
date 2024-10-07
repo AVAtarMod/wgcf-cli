@@ -76,7 +76,7 @@ jobs:
           - goarch: 386
             goos: darwin
         include:
-          # BEIGIN MacOS ARM64
+          # BEGIN MacOS ARM64
           - goos: darwin
             goarch: arm64
           # END MacOS ARM64
@@ -131,7 +131,7 @@ jobs:
           if ! [[ -z "${{ needs.release.outputs.pre_release }}" ]]; then
             export VERSION=${{ github.ref_name }} 
           else
-            git fetch --tags --unshallow
+            git fetch --tags --unshallow --force
           fi
           export CGO_ENABLED=0
           make
@@ -172,11 +172,23 @@ jobs:
           tag: ${{ github.ref }}
           file_glob: true
 
-      - name: Upload binaries to release
+      - name: Upload binaries to release (Windows)
         uses: svenstaro/upload-release-action@04733e069f2d7f7f0b4aebc4fbdbce8613b03ccd # v2
-        if: github.event_name == 'release' || (github.event_name == 'push' && (contains(github.ref, 'refs/tags/')))
+        if: startsWidth(matrix.os, 'windows') && (github.event_name == 'release' || (github.event_name == 'push' && (contains(github.ref, 'refs/tags/'))))
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./wgcf-cli-${{ env.ASSET_NAME }}
+          file: ./build_assets/wgcf-cli.exe
           tag: ${{ github.ref }}
-          file_glob: true
+          asset_name: wgcf-cli-${{ env.ASSET_NAME }}.exe
+          file_glob: false
+
+
+      - name: Upload binaries to release (Non-Windows)
+        uses: svenstaro/upload-release-action@04733e069f2d7f7f0b4aebc4fbdbce8613b03ccd # v2
+        if: (! startsWidth(matrix.os, 'windows')) && (github.event_name == 'release' || (github.event_name == 'push' && (contains(github.ref, 'refs/tags/'))))
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./build_assets/wgcf-cli.exe
+          tag: ${{ github.ref }}
+          asset_name: wgcf-cli-${{ env.ASSET_NAME }}.exe
+          file_glob: false
