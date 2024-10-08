@@ -44,3 +44,4 @@ make
 $(shell go env CGO_ENABLED)
 ```
 3. `TAGS`, Default: ` `
+4. `BUILD_DIRECTORY`, Default: `.`

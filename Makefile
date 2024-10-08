@@ -21,11 +21,12 @@ endif
 TAGS ?= 
 LDFLAGS = -X github.com/ArchiveNetwork/wgcf-cli/constant.Version=$(VERSION) -s -w -buildid= $(LDFLAG_LINKMODE)
 GOFLAGS ?= -trimpath $(BUILD_MODE) -tags=$(TAGS) -mod=readonly -modcacherw -v -ldflags "$(LDFLAGS)"
+BUILD_DIRECTORY ?= .
 
 ifeq ($(shell if [ "$(GOOS)" = "windows" ]; then echo true; fi),true)
-OUTPUT = $(NAME).exe
+OUTPUT = $(BUILD_DIRECTORY)/$(NAME).exe
 else
-OUTPUT = $(NAME)
+OUTPUT = $(BUILD_DIRECTORY)/$(NAME)
 endif
 ifdef completion
 all: completion
