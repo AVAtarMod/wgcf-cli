@@ -206,7 +206,7 @@ func generate(cmd *cobra.Command, args []string) {
 		if err != nil {
 			ExitDefault(err)
 		}
-		fmt.Printf("Generate %s configuration file '%s' (ID: %s) successfully\n", asString(generator), filepath, resStruct.ID)
+		fmt.Printf("Configuration file '%s' for  %s generated (ID: %s) successfully\n", filepath, asString(generator), resStruct.ID)
 	case Custom:
 		filepath, _ := cmd.Flags().GetString("output-file")
 		askOutputOverwrite(filepath)
@@ -214,6 +214,6 @@ func generate(cmd *cobra.Command, args []string) {
 		if err != nil {
 			ExitDefault(err)
 		}
-		fmt.Printf("Generate %s configuration file '%s' (ID: %s) successfully\n", asString(generator), filepath, resStruct.ID)
+		fmt.Printf("Configuration file '%s' for  %s generated (ID: %s) successfully\n", filepath, asString(generator), resStruct.ID)
 	}
 }

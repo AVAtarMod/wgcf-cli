@@ -49,5 +49,5 @@ func unbind(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("unbinded account (ID: %s) successfully\n", id)
+	fmt.Printf("Account unbinded (ID: %s) successfully\n", id)
 }

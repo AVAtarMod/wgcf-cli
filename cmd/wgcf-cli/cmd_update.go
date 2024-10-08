@@ -79,5 +79,5 @@ func update(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Updated configuration file (ID: %s) successfully\n", id)
+	fmt.Printf("Configuration file updated (ID: %s) successfully\n", id)
 }
