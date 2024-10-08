@@ -83,11 +83,11 @@ func detectOutputFileType(cmd *cobra.Command) (OutputFileType, error) {
 	return Custom, nil
 }
 
-func ternary[V any](condition bool, on_true V, on_false V) V {
+func ternary[V any](condition bool, onTrue V, onFalse V) V {
 	if condition {
-		return on_true
+		return onTrue
 	}
-	return on_false
+	return onFalse
 }
 
 func detectGeneratorType(cmd *cobra.Command) (GeneratorType, error) {
@@ -133,21 +133,21 @@ func askOutputOverwrite(path string) {
 }
 
 func getDefaultFilePath(generator GeneratorType) string {
-	var base_name = strings.TrimSuffix(configPath, path.Ext(configPath))
+	var baseName = strings.TrimSuffix(configPath, path.Ext(configPath))
 	switch generator {
 	case Xray:
-		return base_name + ".xray.json"
+		return baseName + ".xray.json"
 	case SingBox:
-		return base_name + ".sing-box.json"
+		return baseName + ".sing-box.json"
 	case WgQuick:
-		return base_name + ".ini"
+		return baseName + ".ini"
 	}
 	return ""
 }
 
-func Exit(err error, exit_code int) {
+func Exit(err error, exitCode int) {
 	fmt.Fprintln(os.Stderr, "Error:", err)
-	os.Exit(exit_code)
+	os.Exit(exitCode)
 }
 func ExitDefault(err error) {
 	Exit(err, 1)
@@ -156,9 +156,9 @@ func ExitDefault(err error) {
 func generate(cmd *cobra.Command, args []string) {
 	var err error
 	var generator GeneratorType
-	var output_type OutputFileType
+	var outputType OutputFileType
 
-	output_type, err = detectOutputFileType(cmd)
+	outputType, err = detectOutputFileType(cmd)
 	if err != nil {
 		ExitDefault(err)
 	}
@@ -176,11 +176,11 @@ func generate(cmd *cobra.Command, args []string) {
 
 	switch generator {
 	case Xray:
-		conf_module, _ := cmd.Flags().GetString(asString(Xray) + "-module")
+		confModule, _ := cmd.Flags().GetString(asString(Xray) + "-module")
 		tag, _ := cmd.Flags().GetString(asString(Xray) + "-tag")
-		indent_width, _ := cmd.Flags().GetUint8(asString(Xray) + "-indent-width")
+		indentWidth, _ := cmd.Flags().GetUint8(asString(Xray) + "-indent-width")
 
-		body, err = utils.GenXray(resStruct, tag, conf_module, indent_width)
+		body, err = utils.GenXray(resStruct, tag, confModule, indentWidth)
 		if err != nil {
 			ExitDefault(err)
 		}
@@ -193,7 +193,7 @@ func generate(cmd *cobra.Command, args []string) {
 		ExitDefault(err)
 	}
 
-	switch output_type {
+	switch outputType {
 	case Stdout:
 		_, err = fmt.Print(string(body))
 		if err != nil {

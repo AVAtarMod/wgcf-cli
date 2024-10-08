@@ -8,8 +8,8 @@ import (
 	C "github.com/ArchiveNetwork/wgcf-cli/constant"
 )
 
-func GenXray(resStruct C.Response, tag string, config_module string, indent_size uint8) (body []byte, err error) {
-	config_body_json := C.Xray{
+func GenXray(resStruct C.Response, tag string, configModule string, indentSize uint8) (body []byte, err error) {
+	configBodyJson := C.Xray{
 		Protocol: "wireguard",
 		Settings: struct {
 			SecretKey string   `json:"secretKey"`
@@ -41,18 +41,18 @@ func GenXray(resStruct C.Response, tag string, config_module string, indent_size
 		Tag: tag,
 	}
 	
-	indent := strings.Repeat(" ", int(indent_size))
-	if config_module == "" {
-		body, err = json.MarshalIndent(config_body_json, "", indent)
+	indent := strings.Repeat(" ", int(indentSize))
+	if configModule == "" {
+		body, err = json.MarshalIndent(configBodyJson, "", indent)
 	} else {
-		var config_json = map[string][]C.Xray{config_module: {config_body_json}}
-		body, err = json.MarshalIndent(config_json, "", indent)
+		var configJson = map[string][]C.Xray{configModule: {configBodyJson}}
+		body, err = json.MarshalIndent(configJson, "", indent)
 	}
 	return
 }
 
 func GenSing(resStruct C.Response) (body []byte, err error) {
-	in_struct := C.Sing{
+	inStruct := C.Sing{
 		Type:          "wireguard",
 		Tag:           "wireguard-out",
 		Server:        resStruct.Config.Peers[0].Endpoint.Host,
@@ -64,12 +64,12 @@ func GenSing(resStruct C.Response) (body []byte, err error) {
 		MTU:           1280,
 	}
 
-	body, err = json.MarshalIndent(in_struct, "", "    ")
+	body, err = json.MarshalIndent(inStruct, "", "    ")
 	return
 }
 
 func GenWgQuick(resStruct C.Response) (body []byte, err error) {
-	in_str := fmt.Sprint(`
+	inStr := fmt.Sprint(`
 [Interface]
 PrivateKey = ` + resStruct.Config.PrivateKey + `
 Address = ` + resStruct.Config.Interface.Addresses.V4 + `/32
@@ -104,6 +104,6 @@ PublicKey = ` + resStruct.Config.Peers[0].PublicKey + `
 AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = ` + resStruct.Config.Peers[0].Endpoint.V4 + `
 `)
-	body = []byte(in_str)
+	body = []byte(inStr)
 	return
 }
