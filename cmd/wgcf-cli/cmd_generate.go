@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	C "github.com/ArchiveNetwork/wgcf-cli/constant"
+	E "github.com/ArchiveNetwork/wgcf-cli/enum"
 	"github.com/ArchiveNetwork/wgcf-cli/utils"
 	"github.com/spf13/cobra"
 )
@@ -18,75 +19,25 @@ var generateCmd = &cobra.Command{
 	Short:     "Generate a xray/sing-box/wg-quick config",
 	Run:       generate,
 	Args:      cobra.OnlyValidArgs,
-	ValidArgs: []string{"--xray", "--xray-module", "--xray-tag", "--xray-indent-width", "--sing-box", "--wg", "--wg-quick", "--output-file"},
-}
-
-type OutputFileType int8
-
-const (
-	Stdout OutputFileType = iota
-	Default
-	Custom
-)
-
-type GeneratorType int8
-
-const (
-	Xray GeneratorType = iota
-	SingBox
-	WgQuick
-	None
-)
-
-func (t GeneratorType) String() string {
-	switch t {
-	case Xray:
-		return "xray"
-	case SingBox:
-		return "sing-box"
-	case WgQuick:
-		return "wg-quick"
-	}
-	return "unknown"
+	ValidArgs: []string{"--xray", "--xray-module", "--xray-endpoint", "--xray-tag", "--xray-indent-width", "--sing-box", "--wg", "--wg-quick", "--output-file"},
 }
 
 func init() {
 	rootCmd.AddCommand(generateCmd)
-	generateCmd.Flags().Bool(asString(Xray), false, "generate a xray config")
-	generateCmd.Flags().Bool(asString(SingBox), false, "generate a sing-box config")
-	generateCmd.Flags().Bool(asString(WgQuick), false, "generate a wg-quick config")
-	generateCmd.Flags().Bool("wg", false, "see --"+asString(WgQuick))
+	generateCmd.Flags().Bool(asString(E.Xray), false, "generate a xray config")
+	generateCmd.Flags().Bool(asString(E.SingBox), false, "generate a sing-box config")
+	generateCmd.Flags().Bool(asString(E.WgQuick), false, "generate a wg-quick config")
+	generateCmd.Flags().Bool("wg", false, "see --"+asString(E.WgQuick))
 
 	generateCmd.Flags().String("output-file", "default", "output file name. Supported values: 'default'/'stdout'/any file path")
-	generateCmd.Flags().String(asString(Xray)+"-module", "", "xray top-level config module ('inbounds' as example). By default generate no top-level module")
-	generateCmd.Flags().String(asString(Xray)+"-tag", "wireguard", "'Tag' field of xray config")
-	generateCmd.Flags().Uint8(asString(Xray)+"-indent-width", 4, "indentation size for xray config")
+	generateCmd.Flags().String(asString(E.Xray)+"-module", "", "xray top-level config module ('inbounds' as example). By default generate no top-level module")
+	generateCmd.Flags().String(asString(E.Xray)+"-tag", "wireguard", "'Tag' field of xray config")
+	generateCmd.Flags().Uint8(asString(E.Xray)+"-indent-width", 4, "indentation size for xray config")
+	generateCmd.Flags().String(asString(E.Xray)+"-endpoint", "domain", "endpoint type to use. Supported values: 'domain'/'ip_v4'/'ip_v6'")
 }
 
 func asString[V fmt.Stringer](object V) string {
 	return V.String(object)
-}
-
-func detectOutputFileType(cmd *cobra.Command) (OutputFileType, error) {
-	var err error
-	path, err := cmd.Flags().GetString("output-file")
-	if err != nil {
-		return Stdout, err
-	}
-	switch path {
-	case "stdout":
-		return Stdout, nil
-	case "default":
-		return Default, nil
-	}
-	return Custom, nil
-}
-
-func ternary[V any](condition bool, onTrue V, onFalse V) V {
-	if condition {
-		return onTrue
-	}
-	return onFalse
 }
 
 func countTrue(args ...bool) uint {
@@ -97,33 +48,6 @@ func countTrue(args ...bool) uint {
 		}
 	}
 	return true_count
-}
-
-func detectGeneratorType(cmd *cobra.Command) (GeneratorType, error) {
-	xray, _ := cmd.Flags().GetBool(asString(Xray))
-	sing, _ := cmd.Flags().GetBool(asString(SingBox))
-	wg, _ := cmd.Flags().GetBool(asString(WgQuick))
-	if !wg {
-		wg, _ = cmd.Flags().GetBool("wg")
-	}
-
-	var flagsEnabled = countTrue(xray, sing, wg)
-	if flagsEnabled != 1 {
-		if flagsEnabled == 0 {
-			return None, errors.New("generator not specified")
-		} else {
-			return None, errors.New("multiple generators not supported")
-		}
-	}
-
-	if xray {
-		return Xray, nil
-	} else if sing {
-		return SingBox, nil
-	} else if wg {
-		return WgQuick, nil
-	}
-	return None, nil
 }
 
 func askOutputOverwrite(path string) {
@@ -138,14 +62,14 @@ func askOutputOverwrite(path string) {
 	}
 }
 
-func getDefaultFilePath(generator GeneratorType) string {
+func getDefaultFilePath(generator E.GeneratorType) string {
 	var baseName = strings.TrimSuffix(configPath, path.Ext(configPath))
 	switch generator {
-	case Xray:
+	case E.Xray:
 		return baseName + ".xray.json"
-	case SingBox:
+	case E.SingBox:
 		return baseName + ".sing-box.json"
-	case WgQuick:
+	case E.WgQuick:
 		return baseName + ".ini"
 	}
 	return ""
@@ -161,8 +85,8 @@ func ExitDefault(err error) {
 
 func generate(cmd *cobra.Command, args []string) {
 	var err error
-	var generator GeneratorType
-	var outputType OutputFileType
+	var generator E.GeneratorType
+	var outputType E.OutputFileType
 
 	outputType, err = detectOutputFileType(cmd)
 	if err != nil {
@@ -181,18 +105,22 @@ func generate(cmd *cobra.Command, args []string) {
 	}
 
 	switch generator {
-	case Xray:
-		confModule, _ := cmd.Flags().GetString(asString(Xray) + "-module")
-		tag, _ := cmd.Flags().GetString(asString(Xray) + "-tag")
-		indentWidth, _ := cmd.Flags().GetUint8(asString(Xray) + "-indent-width")
-
-		body, err = utils.GenXray(resStruct, tag, confModule, indentWidth)
+	case E.Xray:
+		confModule, _ := cmd.Flags().GetString(asString(E.Xray) + "-module")
+		tag, _ := cmd.Flags().GetString(asString(E.Xray) + "-tag")
+		indentWidth, _ := cmd.Flags().GetUint8(asString(E.Xray) + "-indent-width")
+		endpointType, err := detectEndpointType(cmd)
 		if err != nil {
 			ExitDefault(err)
 		}
-	case SingBox:
+
+		body, err = utils.GenXray(resStruct, tag, confModule, indentWidth, endpointType)
+		if err != nil {
+			ExitDefault(err)
+		}
+	case E.SingBox:
 		body, err = utils.GenSing(resStruct)
-	case WgQuick:
+	case E.WgQuick:
 		body, err = utils.GenWgQuick(resStruct)
 	}
 	if err != nil {
@@ -200,26 +128,84 @@ func generate(cmd *cobra.Command, args []string) {
 	}
 
 	switch outputType {
-	case Stdout:
+	case E.Stdout:
 		_, err = fmt.Print(string(body))
 		if err != nil {
 			ExitDefault(err)
 		}
-	case Default:
+	case E.Default:
 		var filepath = getDefaultFilePath(generator)
 		askOutputOverwrite(filepath)
 		err = os.WriteFile(filepath, body, 0600)
 		if err != nil {
 			ExitDefault(err)
 		}
-		fmt.Printf("Configuration file '%s' for  %s generated (ID: %s) successfully\n", filepath, asString(generator), resStruct.ID)
-	case Custom:
+		fmt.Printf("Generate %s configuration file '%s' (ID: %s) successfully\n", asString(generator), filepath, resStruct.ID)
+	case E.Custom:
 		filepath, _ := cmd.Flags().GetString("output-file")
 		askOutputOverwrite(filepath)
 		err = os.WriteFile(filepath, body, 0600)
 		if err != nil {
 			ExitDefault(err)
 		}
-		fmt.Printf("Configuration file '%s' for  %s generated (ID: %s) successfully\n", filepath, asString(generator), resStruct.ID)
+		fmt.Printf("Generate %s configuration file '%s' (ID: %s) successfully\n", asString(generator), filepath, resStruct.ID)
 	}
+}
+
+func detectGeneratorType(cmd *cobra.Command) (E.GeneratorType, error) {
+	xray, _ := cmd.Flags().GetBool(asString(E.Xray))
+	sing, _ := cmd.Flags().GetBool(asString(E.SingBox))
+	wg, _ := cmd.Flags().GetBool(asString(E.WgQuick))
+	if !wg {
+		wg, _ = cmd.Flags().GetBool("wg")
+	}
+
+	var flagsEnabled = countTrue(xray, sing, wg)
+	if flagsEnabled != 1 {
+		if flagsEnabled == 0 {
+			return E.None, errors.New("generator not specified")
+		} else {
+			return E.None, errors.New("multiple generators not supported")
+		}
+	}
+
+	if xray {
+		return E.Xray, nil
+	} else if sing {
+		return E.SingBox, nil
+	} else if wg {
+		return E.WgQuick, nil
+	}
+	return E.None, nil
+}
+
+func detectOutputFileType(cmd *cobra.Command) (E.OutputFileType, error) {
+	var err error
+	path, err := cmd.Flags().GetString("output-file")
+	if err != nil {
+		return E.Stdout, err
+	}
+	switch path {
+	case "stdout":
+		return E.Stdout, nil
+	case "default":
+		return E.Default, nil
+	}
+	return E.Custom, nil
+}
+
+func detectEndpointType(cmd *cobra.Command) (E.EndpointType, error) {
+	endpointType, err := cmd.Flags().GetString(asString(E.Xray) + "-endpoint")
+	if err != nil {
+		return E.Domain, err
+	}
+	switch endpointType {
+	case "domain":
+		return E.Domain, nil
+	case "ip_v4":
+		return E.IPv4, nil
+	case "ip_v6":
+		return E.IPv6, nil
+	}
+	return E.Domain, errors.New("unsupported endpoint type")
 }

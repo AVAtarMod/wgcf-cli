@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	C "github.com/ArchiveNetwork/wgcf-cli/constant"
+	E "github.com/ArchiveNetwork/wgcf-cli/enum"
 	"github.com/ArchiveNetwork/wgcf-cli/utils"
 )
 
@@ -32,17 +33,17 @@ func removeConfig(check checker) {
 }
 
 func beginGenerateTest(check checker) {
-	generateCmd.Flags().Set(asString(Xray), "false")
+	generateCmd.Flags().Set(asString(E.Xray), "false")
 	generateCmd.Flags().Set("wg", "false")
-	generateCmd.Flags().Set(asString(WgQuick), "false")
-	generateCmd.Flags().Set(asString(SingBox), "false")
+	generateCmd.Flags().Set(asString(E.WgQuick), "false")
+	generateCmd.Flags().Set(asString(E.SingBox), "false")
 	createConfig(check)
 }
-func endGenerateTest(check checker, generator GeneratorType) {
+func endGenerateTest(check checker, generator E.GeneratorType) {
 	removeConfig(check)
 	os.Remove(getDefaultFilePath(generator))
 }
-func runGenerateTest(check checker, generator GeneratorType, test func()) {
+func runGenerateTest(check checker, generator E.GeneratorType, test func()) {
 	beginGenerateTest(check)
 	test()
 	endGenerateTest(check, generator)
@@ -89,11 +90,11 @@ func TestGenerateWg(t *testing.T) {
 
 	check := func(err error) { expectNoErr(err, t) }
 
-	runGenerateTest(check, WgQuick, func() {
+	runGenerateTest(check, E.WgQuick, func() {
 		rootCmd.SetArgs([]string{"generate", "--wg"})
 		check(rootCmd.Execute())
 
-		os.Remove(getDefaultFilePath(WgQuick))
+		os.Remove(getDefaultFilePath(E.WgQuick))
 		rootCmd.SetArgs([]string{"generate", "--wg-quick"})
 		check(rootCmd.Execute())
 	})
@@ -102,7 +103,7 @@ func TestGenerateWg(t *testing.T) {
 func TestGenerateSingBox(t *testing.T) {
 	check := func(err error) { expectNoErr(err, t) }
 
-	runGenerateTest(check, WgQuick, func() {
+	runGenerateTest(check, E.WgQuick, func() {
 		rootCmd.SetArgs([]string{"generate", "--sing-box"})
 		check(rootCmd.Execute())
 	})
@@ -111,7 +112,7 @@ func TestGenerateSingBox(t *testing.T) {
 func TestGenerateXray(t *testing.T) {
 	check := func(err error) { expectNoErr(err, t) }
 
-	runGenerateTest(check, WgQuick, func() {
+	runGenerateTest(check, E.WgQuick, func() {
 		rootCmd.SetArgs([]string{"generate", "--xray"})
 		check(rootCmd.Execute())
 	})
