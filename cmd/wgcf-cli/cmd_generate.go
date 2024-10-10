@@ -19,7 +19,7 @@ var generateCmd = &cobra.Command{
 	Short:     "Generate a xray/sing-box/wg-quick config",
 	Run:       generate,
 	Args:      cobra.OnlyValidArgs,
-	ValidArgs: []string{"--xray", "--xray-module", "--xray-tag", "--xray-indent-width", "--sing-box", "--wg", "--wg-quick", "--output-file"},
+	ValidArgs: []string{"--xray", "--xray-module", "--xray-endpoint", "--xray-tag", "--xray-indent-width", "--sing-box", "--wg", "--wg-quick", "--output-file"},
 }
 
 func init() {
@@ -109,8 +109,12 @@ func generate(cmd *cobra.Command, args []string) {
 		conf_module, _ := cmd.Flags().GetString(asString(E.Xray) + "-module")
 		tag, _ := cmd.Flags().GetString(asString(E.Xray) + "-tag")
 		indent_width, _ := cmd.Flags().GetUint8(asString(E.Xray) + "-indent-width")
+		endpoint_type, err := detectEndpointType(cmd)
+		if err != nil {
+			ExitDefault(err)
+		}
 
-		body, err = utils.GenXray(resStruct, tag, conf_module, indent_width)
+		body, err = utils.GenXray(resStruct, tag, conf_module, indent_width, endpoint_type)
 		if err != nil {
 			ExitDefault(err)
 		}
@@ -190,3 +194,18 @@ func detectOutputFileType(cmd *cobra.Command) (E.OutputFileType, error) {
 	return E.Custom, nil
 }
 
+func detectEndpointType(cmd *cobra.Command) (E.EndpointType, error) {
+	endpoint_type, err := cmd.Flags().GetString(asString(E.Xray) + "-endpoint")
+	if err != nil {
+		return E.Domain, err
+	}
+	switch endpoint_type {
+	case "domain":
+		return E.Domain, nil
+	case "ip_v4":
+		return E.IPv4, nil
+	case "ip_v6":
+		return E.IPv6, nil
+	}
+	return E.Domain, errors.New("unsupported endpoint type")
+}

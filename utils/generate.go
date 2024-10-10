@@ -3,25 +3,30 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	C "github.com/ArchiveNetwork/wgcf-cli/constant"
+	E "github.com/ArchiveNetwork/wgcf-cli/enum"
 )
 
-func GenXray(resStruct C.Response, tag string, config_module string, indent_size uint8) (body []byte, err error) {
+func constructAddress(resStruct C.Response, endpoint_type E.EndpointType) string {
+	var peer *C.ResponsePeer = &resStruct.Config.Peers[0]
+	switch endpoint_type {
+	case E.Domain:
+		return peer.Endpoint.Host
+	case E.IPv4:
+		return peer.Endpoint.V4 + ":" + strconv.Itoa(int(peer.Endpoint.Ports[0]))
+	case E.IPv6:
+		return peer.Endpoint.V6 + ":" + strconv.Itoa(int(peer.Endpoint.Ports[0]))
+	}
+	return ""
+}
+
+func GenXray(resStruct C.Response, tag string, config_module string, indent_size uint8, endpoint_type E.EndpointType) (body []byte, err error) {
 	config_body_json := C.Xray{
 		Protocol: "wireguard",
-		Settings: struct {
-			SecretKey string   `json:"secretKey"`
-			Address   []string `json:"address"`
-			Peers     []struct {
-				PublicKey  string   `json:"publicKey"`
-				AllowedIPs []string `json:"allowedIPs"`
-				Endpoint   string   `json:"endpoint"`
-			} `json:"peers"`
-			Reserved []int `json:"reserved"`
-			MTU      int   `json:"mtu"`
-		}{
+		Settings: C.XraySettings{
 			SecretKey: resStruct.Config.PrivateKey,
 			Address:   []string{resStruct.Config.Interface.Addresses.V4 + "/32", resStruct.Config.Interface.Addresses.V6 + "/128"},
 			Peers: []struct {
@@ -30,9 +35,9 @@ func GenXray(resStruct C.Response, tag string, config_module string, indent_size
 				Endpoint   string   `json:"endpoint"`
 			}{
 				{
-					PublicKey:  "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+					PublicKey:  resStruct.Config.Peers[0].PublicKey,
 					AllowedIPs: []string{"0.0.0.0/0", "::/0"},
-					Endpoint:   resStruct.Config.Peers[0].Endpoint.Host,
+					Endpoint:   constructAddress(resStruct, endpoint_type),
 				},
 			},
 			Reserved: resStruct.Config.ReservedDec,
@@ -40,7 +45,7 @@ func GenXray(resStruct C.Response, tag string, config_module string, indent_size
 		},
 		Tag: tag,
 	}
-	
+
 	indent := strings.Repeat(" ", int(indent_size))
 	if config_module == "" {
 		body, err = json.MarshalIndent(config_body_json, "", indent)
