@@ -17,22 +17,22 @@ type Request struct {
 func (r Request) New() (request *http.Request, err error) {
 	var url, method string
 	if r.Action == "register" {
-		url = "https://api.cloudflareclient.com/v0a2158/reg"
+		url = "https://api.cloudflareclient.com/v0a2483/reg"
 		method = "POST"
 	} else if r.Action == "license" {
-		url = "https://api.cloudflareclient.com/v0a2158/reg/" + r.ID + "/account"
+		url = "https://api.cloudflareclient.com/v0a2483/reg/" + r.ID + "/account"
 		method = "PUT"
 	} else if r.Action == "bind" {
-		url = "https://api.cloudflareclient.com/v0a2158/reg/" + r.ID + "/account/devices"
+		url = "https://api.cloudflareclient.com/v0a2483/reg/" + r.ID + "/account/devices"
 		method = "GET"
 	} else if r.Action == "name" || r.Action == "unbind" {
-		url = "https://api.cloudflareclient.com/v0a2158/reg/" + r.ID + "/account/reg/" + r.ID
+		url = "https://api.cloudflareclient.com/v0a2483/reg/" + r.ID + "/account/reg/" + r.ID
 		method = "PATCH"
 	} else if r.Action == "cancel" {
-		url = "https://api.cloudflareclient.com/v0a2158/reg/" + r.ID
+		url = "https://api.cloudflareclient.com/v0a2483/reg/" + r.ID
 		method = "DELETE"
 	} else if r.Action == "update" {
-		url = "https://api.cloudflareclient.com/v0a2158/reg/" + r.ID
+		url = "https://api.cloudflareclient.com/v0a2483/reg/" + r.ID
 		method = "GET"
 	} else {
 		err = fmt.Errorf("no action specified")
