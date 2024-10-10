@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	C "github.com/ArchiveNetwork/wgcf-cli/constant"
 	"github.com/ArchiveNetwork/wgcf-cli/utils"
@@ -53,19 +52,15 @@ func removePortFromIp(address string) (string, error) {
 
 func register(cmd *cobra.Command, args []string) {
 	privateKey, publicKey := utils.GenerateKey()
-
-	installID := utils.RandStringRunes(22, nil)
-	fcmtoken := utils.RandStringRunes(134, nil)
-
+	fmt.Printf("Generated public key: %s", publicKey)
 	r := utils.Request{
 		Payload: []byte(
 			`{
 				"key":"` + publicKey + `",
-				"install_id":"` + installID + `",
-				"fcm_token":"` + installID + `:APA91b` + fcmtoken + `",
-				"tos":"` + time.Now().UTC().Format("2006-01-02T15:04:05.999Z") + `",
-				"model":"Android",
-				"serial_number":"` + installID + `"
+				"install_id":"",
+				"fcm_token":"",
+				"model":"",
+				"serial_number":""
 			}`,
 		),
 		Action:    "register",
