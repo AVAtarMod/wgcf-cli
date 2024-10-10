@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -41,6 +42,15 @@ func pre_register(cmd *cobra.Command, args []string) {
 	client.New()
 }
 
+func removePortFromIp(address string) (string, error) {
+	const sep string = ":"
+	slice := strings.Split(address, sep)
+	if len(slice) < 2 {
+		return "", errors.New("invalid address " + address)
+	}
+	return strings.Join(slice[0:len(slice)-1], sep), nil
+}
+
 func register(cmd *cobra.Command, args []string) {
 	privateKey, publicKey := utils.GenerateKey()
 
@@ -77,11 +87,24 @@ func register(cmd *cobra.Command, args []string) {
 
 	var resStruct C.Response
 	if err = json.Unmarshal(body, &resStruct); err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
+		ExitDefault(err)
 	}
+
+	err_handler := func(err error) {
+		if err != nil {
+			ExitDefault(errors.New("cannot process API response. Reason: " + err.Error()))
+		}
+	}
+	processed_peer_v4, err := removePortFromIp(resStruct.Config.Peers[0].Endpoint.V4)
+	err_handler(err)
+	processed_peer_v6, err := removePortFromIp(resStruct.Config.Peers[0].Endpoint.V6)
+	err_handler(err)
+
 	resStruct.Config.ReservedDec, resStruct.Config.ReservedHex = utils.ClientIDtoReserved(resStruct.Config.ClientID)
 	resStruct.Config.PrivateKey = privateKey
+	resStruct.Config.Peers[0].Endpoint.V4 = processed_peer_v4
+	resStruct.Config.Peers[0].Endpoint.V6 = processed_peer_v6
+
 	utils.SimplifyOutput(resStruct)
 
 	store, err := json.MarshalIndent(resStruct, "", "    ")
