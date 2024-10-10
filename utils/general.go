@@ -65,3 +65,11 @@ func GenerateKey() (string, string) {
 
 	return base64.StdEncoding.EncodeToString(priv[:]), base64.StdEncoding.EncodeToString(pub[:])
 }
+
+
+func Ternary[V any](condition bool, on_true V, on_false V) V {
+	if condition {
+		return on_true
+	}
+	return on_false
+}

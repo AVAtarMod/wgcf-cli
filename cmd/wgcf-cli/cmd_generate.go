@@ -22,7 +22,6 @@ var generateCmd = &cobra.Command{
 	ValidArgs: []string{"--xray", "--xray-module", "--xray-tag", "--xray-indent-width", "--sing-box", "--wg", "--wg-quick", "--output-file"},
 }
 
-
 func init() {
 	rootCmd.AddCommand(generateCmd)
 	generateCmd.Flags().Bool(asString(E.Xray), false, "generate a xray config")
@@ -41,28 +40,6 @@ func asString[V fmt.Stringer](object V) string {
 	return V.String(object)
 }
 
-func detectOutputFileType(cmd *cobra.Command) (OutputFileType, error) {
-	var err error
-	path, err := cmd.Flags().GetString("output-file")
-	if err != nil {
-		return Stdout, err
-	}
-	switch path {
-	case "stdout":
-		return Stdout, nil
-	case "default":
-		return Default, nil
-	}
-	return Custom, nil
-}
-
-func ternary[V any](condition bool, on_true V, on_false V) V {
-	if condition {
-		return on_true
-	}
-	return on_false
-}
-
 func countTrue(args ...bool) uint {
 	var true_count uint = 0
 	for _, v := range args {
@@ -71,33 +48,6 @@ func countTrue(args ...bool) uint {
 		}
 	}
 	return true_count
-}
-
-func detectGeneratorType(cmd *cobra.Command) (GeneratorType, error) {
-	xray, _ := cmd.Flags().GetBool(asString(Xray))
-	sing, _ := cmd.Flags().GetBool(asString(SingBox))
-	wg, _ := cmd.Flags().GetBool(asString(WgQuick))
-	if !wg {
-		wg, _ = cmd.Flags().GetBool("wg")
-	}
-
-	var flagsEnabled = countTrue(xray, sing, wg)
-	if flagsEnabled != 1 {
-		if flagsEnabled == 0 {
-			return None, errors.New("generator not specified")
-		} else {
-			return None, errors.New("multiple generators not supported")
-		}
-	}
-
-	if xray {
-		return Xray, nil
-	} else if sing {
-		return SingBox, nil
-	} else if wg {
-		return WgQuick, nil
-	}
-	return None, nil
 }
 
 func askOutputOverwrite(path string) {
@@ -197,3 +147,46 @@ func generate(cmd *cobra.Command, args []string) {
 		fmt.Printf("Generate %s configuration file '%s' (ID: %s) successfully\n", asString(generator), filepath, resStruct.ID)
 	}
 }
+
+func detectGeneratorType(cmd *cobra.Command) (E.GeneratorType, error) {
+	xray, _ := cmd.Flags().GetBool(asString(E.Xray))
+	sing, _ := cmd.Flags().GetBool(asString(E.SingBox))
+	wg, _ := cmd.Flags().GetBool(asString(E.WgQuick))
+	if !wg {
+		wg, _ = cmd.Flags().GetBool("wg")
+	}
+
+	var flagsEnabled = countTrue(xray, sing, wg)
+	if flagsEnabled != 1 {
+		if flagsEnabled == 0 {
+			return E.None, errors.New("generator not specified")
+		} else {
+			return E.None, errors.New("multiple generators not supported")
+		}
+	}
+
+	if xray {
+		return E.Xray, nil
+	} else if sing {
+		return E.SingBox, nil
+	} else if wg {
+		return E.WgQuick, nil
+	}
+	return E.None, nil
+}
+
+func detectOutputFileType(cmd *cobra.Command) (E.OutputFileType, error) {
+	var err error
+	path, err := cmd.Flags().GetString("output-file")
+	if err != nil {
+		return E.Stdout, err
+	}
+	switch path {
+	case "stdout":
+		return E.Stdout, nil
+	case "default":
+		return E.Default, nil
+	}
+	return E.Custom, nil
+}
+
