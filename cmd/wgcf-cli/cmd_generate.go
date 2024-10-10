@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	C "github.com/ArchiveNetwork/wgcf-cli/constant"
+	E "github.com/ArchiveNetwork/wgcf-cli/enum"
 	"github.com/ArchiveNetwork/wgcf-cli/utils"
 	"github.com/spf13/cobra"
 )
@@ -21,46 +22,19 @@ var generateCmd = &cobra.Command{
 	ValidArgs: []string{"--xray", "--xray-module", "--xray-tag", "--xray-indent-width", "--sing-box", "--wg", "--wg-quick", "--output-file"},
 }
 
-type OutputFileType int8
-
-const (
-	Stdout OutputFileType = iota
-	Default
-	Custom
-)
-
-type GeneratorType int8
-
-const (
-	Xray GeneratorType = iota
-	SingBox
-	WgQuick
-	None
-)
-
-func (t GeneratorType) String() string {
-	switch t {
-	case Xray:
-		return "xray"
-	case SingBox:
-		return "sing-box"
-	case WgQuick:
-		return "wg-quick"
-	}
-	return "unknown"
-}
 
 func init() {
 	rootCmd.AddCommand(generateCmd)
-	generateCmd.Flags().Bool(asString(Xray), false, "generate a xray config")
-	generateCmd.Flags().Bool(asString(SingBox), false, "generate a sing-box config")
-	generateCmd.Flags().Bool(asString(WgQuick), false, "generate a wg-quick config")
-	generateCmd.Flags().Bool("wg", false, "see --"+asString(WgQuick))
+	generateCmd.Flags().Bool(asString(E.Xray), false, "generate a xray config")
+	generateCmd.Flags().Bool(asString(E.SingBox), false, "generate a sing-box config")
+	generateCmd.Flags().Bool(asString(E.WgQuick), false, "generate a wg-quick config")
+	generateCmd.Flags().Bool("wg", false, "see --"+asString(E.WgQuick))
 
 	generateCmd.Flags().String("output-file", "default", "output file name. Supported values: 'default'/'stdout'/any file path")
-	generateCmd.Flags().String(asString(Xray)+"-module", "", "xray top-level config module ('inbounds' as example). By default generate no top-level module")
-	generateCmd.Flags().String(asString(Xray)+"-tag", "wireguard", "'Tag' field of xray config")
-	generateCmd.Flags().Uint8(asString(Xray)+"-indent-width", 4, "indentation size for xray config")
+	generateCmd.Flags().String(asString(E.Xray)+"-module", "", "xray top-level config module ('inbounds' as example). By default generate no top-level module")
+	generateCmd.Flags().String(asString(E.Xray)+"-tag", "wireguard", "'Tag' field of xray config")
+	generateCmd.Flags().Uint8(asString(E.Xray)+"-indent-width", 4, "indentation size for xray config")
+	generateCmd.Flags().String(asString(E.Xray)+"-endpoint", "domain", "endpoint type to use. Supported values: 'domain'/'ip_v4'/'ip_v6'")
 }
 
 func asString[V fmt.Stringer](object V) string {
@@ -138,14 +112,14 @@ func askOutputOverwrite(path string) {
 	}
 }
 
-func getDefaultFilePath(generator GeneratorType) string {
+func getDefaultFilePath(generator E.GeneratorType) string {
 	var base_name = strings.TrimSuffix(configPath, path.Ext(configPath))
 	switch generator {
-	case Xray:
+	case E.Xray:
 		return base_name + ".xray.json"
-	case SingBox:
+	case E.SingBox:
 		return base_name + ".sing-box.json"
-	case WgQuick:
+	case E.WgQuick:
 		return base_name + ".ini"
 	}
 	return ""
@@ -161,8 +135,8 @@ func ExitDefault(err error) {
 
 func generate(cmd *cobra.Command, args []string) {
 	var err error
-	var generator GeneratorType
-	var output_type OutputFileType
+	var generator E.GeneratorType
+	var output_type E.OutputFileType
 
 	output_type, err = detectOutputFileType(cmd)
 	if err != nil {
@@ -181,18 +155,18 @@ func generate(cmd *cobra.Command, args []string) {
 	}
 
 	switch generator {
-	case Xray:
-		conf_module, _ := cmd.Flags().GetString(asString(Xray) + "-module")
-		tag, _ := cmd.Flags().GetString(asString(Xray) + "-tag")
-		indent_width, _ := cmd.Flags().GetUint8(asString(Xray) + "-indent-width")
+	case E.Xray:
+		conf_module, _ := cmd.Flags().GetString(asString(E.Xray) + "-module")
+		tag, _ := cmd.Flags().GetString(asString(E.Xray) + "-tag")
+		indent_width, _ := cmd.Flags().GetUint8(asString(E.Xray) + "-indent-width")
 
 		body, err = utils.GenXray(resStruct, tag, conf_module, indent_width)
 		if err != nil {
 			ExitDefault(err)
 		}
-	case SingBox:
+	case E.SingBox:
 		body, err = utils.GenSing(resStruct)
-	case WgQuick:
+	case E.WgQuick:
 		body, err = utils.GenWgQuick(resStruct)
 	}
 	if err != nil {
@@ -200,12 +174,12 @@ func generate(cmd *cobra.Command, args []string) {
 	}
 
 	switch output_type {
-	case Stdout:
+	case E.Stdout:
 		_, err = fmt.Print(string(body))
 		if err != nil {
 			ExitDefault(err)
 		}
-	case Default:
+	case E.Default:
 		var filepath = getDefaultFilePath(generator)
 		askOutputOverwrite(filepath)
 		err = os.WriteFile(filepath, body, 0600)
@@ -213,7 +187,7 @@ func generate(cmd *cobra.Command, args []string) {
 			ExitDefault(err)
 		}
 		fmt.Printf("Generate %s configuration file '%s' (ID: %s) successfully\n", asString(generator), filepath, resStruct.ID)
-	case Custom:
+	case E.Custom:
 		filepath, _ := cmd.Flags().GetString("output-file")
 		askOutputOverwrite(filepath)
 		err = os.WriteFile(filepath, body, 0600)
