@@ -148,7 +148,7 @@ jobs:
         run: |
           pushd build_assets || exit 1
           touch -mt $(date +%Y01010000) *
-          tar --zstd -cvf ../wgcf-cli-${{ env.ASSET_NAME }}.tar.zstd .
+          tar --zstd -cvf ../wgcf-cli-${{ env.ASSET_NAME }}-${{ github.ref_name }}.tar.zstd .
           popd || exit 1
           FILE=./wgcf-cli-${{ env.ASSET_NAME }}.tar.zstd
           DGST=$FILE.dgst
@@ -179,7 +179,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./build_assets/wgcf-cli.exe
           tag: ${{ github.ref }}
-          asset_name: wgcf-cli-${{ env.ASSET_NAME }}.exe
+          asset_name: wgcf-cli-${{ env.ASSET_NAME }}-${{ github.ref_name }}.exe
           file_glob: false
 
 
@@ -190,5 +190,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./build_assets/wgcf-cli
           tag: ${{ github.ref }}
-          asset_name: wgcf-cli-${{ env.ASSET_NAME }}
+          asset_name: wgcf-cli-${{ env.ASSET_NAME }}-${{ github.ref_name }}
           file_glob: false
