@@ -1,19 +1,21 @@
 package constant
 
+type XraySettings struct {
+	SecretKey string   `json:"secretKey"`
+	Address   []string `json:"address"`
+	Peers     []struct {
+		PublicKey  string   `json:"publicKey"`
+		AllowedIPs []string `json:"allowedIPs"`
+		Endpoint   string   `json:"endpoint"`
+	} `json:"peers"`
+	Reserved []int `json:"reserved"`
+	MTU      int   `json:"mtu"`
+}
+
 type Xray struct {
-	Protocol string `json:"protocol"`
-	Settings struct {
-		SecretKey string   `json:"secretKey"`
-		Address   []string `json:"address"`
-		Peers     []struct {
-			PublicKey  string   `json:"publicKey"`
-			AllowedIPs []string `json:"allowedIPs"`
-			Endpoint   string   `json:"endpoint"`
-		} `json:"peers"`
-		Reserved []int `json:"reserved"`
-		MTU      int   `json:"mtu"`
-	} `json:"settings"`
-	Tag string `json:"tag"`
+	Protocol string       `json:"protocol"`
+	Settings XraySettings `json:"settings"`
+	Tag      string       `json:"tag"`
 }
 
 type Sing struct {
@@ -42,6 +44,16 @@ type SimpleOutput struct {
 		V4 string `json:"v4"`
 		V6 string `json:"v6"`
 	} `json:"addresses"`
+}
+
+type ResponsePeer struct {
+	PublicKey string `json:"public_key"`
+	Endpoint  struct {
+		V4    string   `json:"v4"`
+		V6    string   `json:"v6"`
+		Ports []uint `json:"ports"`
+		Host  string   `json:"host"`
+	} `json:"endpoint"`
 }
 
 type Response struct {
@@ -100,19 +112,12 @@ type Response struct {
 	FCMToken  string `json:"fcm_token"`
 	SerialNum string `json:"serial_number,omitempty"`
 	Config    struct {
-		ClientID    string `json:"client_id"`
-		ReservedHex string `json:"reserved_hex"`
-		ReservedDec []int  `json:"reserved_dec"`
-		PrivateKey  string `json:"private_key"`
-		Peers       []struct {
-			PublicKey string `json:"public_key"`
-			Endpoint  struct {
-				V4   string `json:"v4"`
-				V6   string `json:"v6"`
-				Host string `json:"host"`
-			} `json:"endpoint"`
-		} `json:"peers"`
-		Interface struct {
+		ClientID    string         `json:"client_id"`
+		ReservedHex string         `json:"reserved_hex"`
+		ReservedDec []int          `json:"reserved_dec"`
+		PrivateKey  string         `json:"private_key"`
+		Peers       []ResponsePeer `json:"peers"`
+		Interface   struct {
 			Addresses struct {
 				V4 string `json:"v4"`
 				V6 string `json:"v6"`
